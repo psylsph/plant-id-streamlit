@@ -95,4 +95,4 @@ if st.session_state["uploaded_file"] is not None:
             st.markdown("Name: " + json.get("name"))
             st.markdown("Certainty: " + json.get("certainty"))
             st.markdown("Description: " + json.get("description"))
-            st.markdown("Care: " + json.get("care"))
+            st.markdown("Care: " + str(json.get("care")))
