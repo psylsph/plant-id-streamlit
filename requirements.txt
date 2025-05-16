@@ -1,4 +1,6 @@
 dotenv
 streamlit
-openai
+groq
 Wand
+numpy
+pillow
