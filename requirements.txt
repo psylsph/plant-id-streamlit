@@ -4,3 +4,4 @@ groq
 Wand
 numpy
 pillow
+json-repair

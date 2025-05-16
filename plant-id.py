@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+from email import message
 import streamlit as st
 from groq import Groq
 from dotenv import load_dotenv
 from wand.image import Image as WandImage
 from PIL import Image as PILImage
+from json_repair import loads as repair_json_loads
 import numpy
 import base64
 import io
@@ -43,7 +45,7 @@ st.session_state["uploaded_file"] = st.file_uploader("**Select an image...**", t
 
 if st.session_state["uploaded_file"] is not None:
 
-    with st.spinner("Wait for it...", show_time=True):
+    with st.spinner("Identifying Plant...", show_time=True):
 
         with WandImage( blob=st.session_state["uploaded_file"].getvalue()) as wand_image:
             
@@ -55,12 +57,27 @@ if st.session_state["uploaded_file"] is not None:
             image.save("plant.jpg")
             st.image(image, caption="Uploaded Image", width=preview_width)
 
+            message = """What plant in this image?
+                        1. Be specific in the type
+                        2. Give a score of certainty of out 100%
+                        3. Give a detailed description
+                        4. Provide care information and conditions the plant likes
+                        Format your response as JSON with the following structure:
+                        {{
+                            "name": "plant name",
+                            "certainty": "out of 100",
+                            "description": "a description of the plant",
+                            "care": "care and conditions information for the plant",
+                        }}"
+
+                    """
+
             chat_completion = client.chat.completions.create(
                 messages=[
                     {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": "What plant in this image? Give a score of certain of out 100%"},
+                            {"type": "text", "text": message},
                             {
                                 "type": "image_url",
                                 "image_url": {
@@ -73,4 +90,9 @@ if st.session_state["uploaded_file"] is not None:
                 model="meta-llama/llama-4-scout-17b-16e-instruct",
             )
 
-            st.write(chat_completion.choices[0].message.content)
+            json = repair_json_loads(chat_completion.choices[0].message.content)
+
+            st.markdown("Name: " + json.get("name"))
+            st.markdown("Certainty: " + json.get("certainty"))
+            st.markdown("Description: " + json.get("description"))
+            st.markdown("Care: " + json.get("care"))
